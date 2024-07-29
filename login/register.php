@@ -14,20 +14,37 @@ try {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = $_POST['username'];
-    $password = $_POST['password'];
-    $email = $_POST['email'];
+    $username = $_POST['username'] ?? '';
+    $password = $_POST['password'] ?? '';
+    $email = $_POST['email'] ?? '';
     $apiToken = $_POST['api_token'] ?? null; // Obtiene el token API, puede ser null si no se proporciona
     $contactListId = $_POST['contact_list_id'] ?? null; // Obtiene el ID de lista de contacto, puede ser null si no se proporciona
 
+    // Validar datos
+    if (empty($username) || empty($password) || empty($email)) {
+        echo "Por favor, complete todos los campos requeridos.";
+        exit();
+    }
+
     // Verificar si el nombre de usuario ya está en uso
-    $stmt = $pdo->prepare("SELECT * FROM users WHERE username = :username");
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE username = :username");
     $stmt->bindParam(':username', $username);
     $stmt->execute();
-
-    if ($stmt->rowCount() > 0) {
+    if ($stmt->fetchColumn() > 0) {
         echo "El nombre de usuario ya está en uso.";
-    } else {
+        exit();
+    }
+
+    // Verificar si el email ya está en uso
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE email = :email");
+    $stmt->bindParam(':email', $email);
+    $stmt->execute();
+    if ($stmt->fetchColumn() > 0) {
+        echo "El email ya está registrado.";
+        exit();
+    }
+
+    try {
         $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 
         // Insertar nuevo usuario
@@ -43,6 +60,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['user'] = $username;
         header("Location: ../index.php"); // Redirige a index.php
         exit();
+    } catch (PDOException $e) {
+        echo "Error al registrar el usuario: " . $e->getMessage();
     }
 }
 ?>

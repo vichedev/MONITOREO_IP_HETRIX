@@ -1,391 +1,602 @@
-// Función para mostrar mensajes
-function showMessage(message, type) {
-  const messageDiv = document.getElementById("message");
-  messageDiv.innerHTML = message;
-  messageDiv.className = `message ${type}`;
-  messageDiv.style.display = "block";
-}
+$(document).ready(function(){
+/* ==========================================================================
+	Scroll
+	========================================================================== */
 
-// Función para cargar configuraciones API desde la base de datos
-function loadApiSettings() {
-  fetch("api/get_api_settings.php") // Reemplaza con la ruta correcta
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.apiToken) {
-        document.getElementById("api-token").value = data.apiToken;
-      }
+	if (!("ontouchstart" in document.documentElement)) {
 
-      if (data.contactListId) {
-        document.getElementById("contact-list-id").value = data.contactListId;
-      }
-    })
-    .catch((error) => console.error("Error al cargar configuraciones:", error));
-}
+		document.documentElement.className += " no-touch";
 
-// Cargar configuraciones al cargar la página
-document.addEventListener("DOMContentLoaded", loadApiSettings);
+		var jScrollOptions = {
+			autoReinitialise: true,
+			autoReinitialiseDelay: 100
+		};
 
-// Función para validar el Token API
-function validateApiToken() {
-  const apiToken = document.getElementById("api-token").value;
-  const contactListId = document.getElementById("contact-list-id").value;
+		$('.scrollable .box-typical-body').jScrollPane(jScrollOptions);
+		$('.side-menu').jScrollPane(jScrollOptions);
+		$('.side-menu-addl').jScrollPane(jScrollOptions);
+		$('.scrollable-block').jScrollPane(jScrollOptions);
+	}
 
-  if (apiToken.trim() === "" || contactListId.trim() === "") {
-    showMessage(
-      "Por favor, ingrese el Token API y el ID de Lista de contacto.",
-      "error"
-    );
-    return;
-  }
+/* ==========================================================================
+    Header search
+    ========================================================================== */
 
-  fetch(`https://api.hetrixtools.com/v3/contact-lists`, {
-    headers: {
-      Authorization: `Bearer ${apiToken}`,
-    },
-  })
-    .then((response) => {
-      if (response.status === 200) {
-        return response.json();
-      } else {
-        throw new Error("Token API no válido.");
-      }
-    })
-    .then((data) => {
-      const contactList = data.contact_lists.find(
-        (list) => list.id === contactListId
-      );
-      if (contactList) {
-        showMessage("Token API y ID de Lista de contacto válidos.", "success");
-      } else {
-        throw new Error("ID de Lista de contacto no válido.");
-      }
-    })
-    .catch((error) => showMessage(error.message, "error"));
-}
+	$('.site-header .site-header-search').each(function(){
+		var parent = $(this),
+			overlay = parent.find('.overlay');
 
-// Función para agregar una nueva IP
-function registerRow() {
-  const name = document.getElementById("new-name").value;
-  const ip = document.getElementById("new-ip").value;
+		overlay.click(function(){
+			parent.removeClass('closed');
+		});
 
-  if (name.trim() === "" || ip.trim() === "") {
-    alert("Por favor, complete todos los campos.");
-    return;
-  }
+		parent.clickoutside(function(){
+			if (!parent.hasClass('closed')) {
+				parent.addClass('closed');
+			}
+		});
+	});
 
-  const apiToken = localStorage.getItem("apiToken");
-  const contactListId = localStorage.getItem("contactListId");
+/* ==========================================================================
+    Header mobile menu
+    ========================================================================== */
 
-  if (!apiToken || !contactListId) {
-    alert(
-      "Por favor, configure el Token API y el ID de Lista de contacto primero."
-    );
-    return;
-  }
+	// Dropdowns
+	$('.site-header-collapsed .dropdown').each(function(){
+		var parent = $(this),
+			btn = parent.find('.dropdown-toggle');
 
-  fetch("hetrix.php", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({
-      action: "add",
-      api_key: apiToken,
-      target: ip,
-      label: name,
-      contact: contactListId,
-    }),
-  })
-    .then((response) => response.text())
-    .then((result) => {
-      const table = document
-        .getElementById("ip-table")
-        .getElementsByTagName("tbody")[0];
-      const rowCount = table.rows.length + 1;
-      const newRow = table.insertRow();
-      newRow.className = "main-row";
+		btn.click(function(){
+			if (parent.hasClass('mobile-opened')) {
+				parent.removeClass('mobile-opened');
+			} else {
+				parent.addClass('mobile-opened');
+			}
+		});
+	});
 
-      const cellId = newRow.insertCell(0);
-      const cellName = newRow.insertCell(1);
-      const cellIp = newRow.insertCell(2);
-      const cellStatus = newRow.insertCell(3);
-      const cellListedIn = newRow.insertCell(4);
-      const cellUpdated = newRow.insertCell(5);
-      const cellActions = newRow.insertCell(6);
+	$('.dropdown-more').each(function(){
+		var parent = $(this),
+			more = parent.find('.dropdown-more-caption'),
+			classOpen = 'opened';
 
-      cellId.innerHTML = rowCount;
-      cellName.innerHTML = name;
-      cellIp.innerHTML = ip;
-      cellStatus.innerHTML = "Pendiente";
-      cellListedIn.innerHTML = "";
-      cellUpdated.innerHTML = "";
-      cellActions.innerHTML = `
-                <button class="btn-action" onclick="verifyRow(this)" title="Verificar ahora">
-                    <img src="https://img.icons8.com/material-outlined/24/000000/user-shield.png"/>
-                </button>
-                <button class="btn-action" onclick="viewDetails(this)" title="Ver Detalles">
-                    <img src="https://img.icons8.com/material-outlined/24/000000/eye.png"/>
-                </button>
-                <button class="btn-action" onclick="deleteRow(this)" title="Eliminar">
-                    <img src="https://img.icons8.com/material-outlined/24/000000/delete.png"/>
-                </button>`;
+		more.click(function(){
+			if (parent.hasClass(classOpen)) {
+				parent.removeClass(classOpen);
+			} else {
+				parent.addClass(classOpen);
+			}
+		});
+	});
 
-      const detailRow = table.insertRow();
-      detailRow.className = "details-row";
-      const detailCell = detailRow.insertCell(0);
-      detailCell.colSpan = 7;
-      detailCell.innerHTML = `
-                <table class="details-table">
-                    <thead>
-                        <tr>
-                            <th>RBL</th>
-                            <th>URL</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>`;
+	// Left mobile menu
+	$('.hamburger').click(function(){
+		if ($('body').hasClass('menu-left-opened')) {
+			$(this).removeClass('is-active');
+			$('body').removeClass('menu-left-opened');
+			$('html').css('overflow','auto');
+		} else {
+			$(this).addClass('is-active');
+			$('body').addClass('menu-left-opened');
+			$('html').css('overflow','hidden');
+		}
+	});
 
-      document.getElementById("new-name").value = "";
-      document.getElementById("new-ip").value = "";
-      showMessage("IP agregada correctamente a HetrixTools.", "success");
-    })
-    .catch((error) => {
-      showMessage(error.message, "error");
-      console.error(error.message);
-    });
-}
+	$('.mobile-menu-left-overlay').click(function(){
+		$('.hamburger').removeClass('is-active');
+		$('body').removeClass('menu-left-opened');
+		$('html').css('overflow','auto');
+	});
 
-// Función para ver detalles de una IP
-function viewDetails(button) {
-  const row = button.parentNode.parentNode;
-  const detailRow = row.nextSibling;
-  const apiToken = localStorage.getItem("apiToken");
-  const ip = row.cells[2].innerText;
+	// Right mobile menu
+	$('.site-header .burger-right').click(function(){
+		if ($('body').hasClass('menu-right-opened')) {
+			$('body').removeClass('menu-right-opened');
+			$('html').css('overflow','auto');
+		} else {
+			$('.hamburger').removeClass('is-active');
+			$('body').removeClass('menu-left-opened');
+			$('body').addClass('menu-right-opened');
+			$('html').css('overflow','hidden');
+		}
+	});
 
-  if (!apiToken) {
-    alert("Por favor, configure el Token API primero.");
-    return;
-  }
+	$('.mobile-menu-right-overlay').click(function(){
+		$('body').removeClass('menu-right-opened');
+		$('html').css('overflow','auto');
+	});
 
-  if (detailRow.style.display === "none" || detailRow.style.display === "") {
-    fetch(`https://api.hetrixtools.com/v3/blacklist-monitors`, {
-      headers: {
-        Authorization: `Bearer ${apiToken}`,
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        const detailsTable = detailRow.querySelector(".details-table tbody");
-        detailsTable.innerHTML = "";
+/* ==========================================================================
+    Header help
+    ========================================================================== */
 
-        const monitor = data.monitors.find((monitor) => monitor.target === ip);
-        if (monitor && monitor.listed.length > 0) {
-          monitor.listed.forEach((listing) => {
-            const detailRow = detailsTable.insertRow();
-            const cellRbl = detailRow.insertCell(0);
-            const cellUrl = detailRow.insertCell(1);
-            cellRbl.innerText = listing.rbl;
-            cellUrl.innerHTML = `<a href="${listing.delist}" target="_blank">${listing.delist}</a>`;
-          });
-        } else {
-          const detailRow = detailsTable.insertRow();
-          const cell = detailRow.insertCell(0);
-          cell.colSpan = 2;
-          cell.innerText = "No hay listados para esta IP.";
-        }
+	$('.help-dropdown').each(function(){
+		var parent = $(this),
+			btn = parent.find('>button'),
+			popup = parent.find('.help-dropdown-popup'),
+			jscroll
+		;
 
-        detailRow.style.display = "table-row-group";
-      })
-      .catch((error) => {
-        console.error(error.message);
-        alert("Error al obtener los detalles de las listas negras.");
-      });
-  } else {
-    detailRow.style.display = "none";
-  }
-}
+		btn.click(function(){
+			if (parent.hasClass('opened')) {
+				parent.removeClass('opened');
+				jscroll.destroy();
+			} else {
+				parent.addClass('opened');
 
-// Función para convertir UTC a la zona horaria local en formato de 24 horas
-const convertUTCToLocal = (utcDateStr) => {
-  const date = new Date(utcDateStr + "Z"); // Añadimos 'Z' para indicar que la fecha está en UTC
-  return date
-    .toLocaleString("es-EC", {
-      timeZone: "America/Guayaquil",
-      hour12: false, // Esto asegura que la hora se muestra en formato de 24 horas
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    })
-    .replace(",", ""); // Eliminamos la coma entre la fecha y la hora
-};
+				if (!("ontouchstart" in document.documentElement)) {
+					setTimeout(function(){
+						jscroll = parent.find('.jscroll').jScrollPane(jScrollOptions).data().jsp;
+					},0);
+				}
+			}
+		});
 
-// Función para verificar el estado de una IP
-function verifyRow(button) {
-  const row = button.parentNode.parentNode;
-  const apiToken = localStorage.getItem("apiToken");
-  const ip = row.cells[2].innerText;
+		$('html').click(function(event) {
+		    if (
+		        !$(event.target).closest('.help-dropdown-popup').length
+		        &&
+		        !$(event.target).closest('.help-dropdown>button').length
+		        &&
+		        !$(event.target).is('.help-dropdown-popup')
+		        &&
+		        !$(event.target).is('.help-dropdown>button')
+		    ) {
+				if (parent.hasClass('opened')) {
+					parent.removeClass('opened');
+					jscroll.destroy();
+		        }
+		    }
+		});
+	});
 
-  if (!apiToken) {
-    alert("Por favor, configure el Token API primero.");
-    return;
-  }
+/* ==========================================================================
+    Side menu list
+    ========================================================================== */
 
-  fetch(`https://api.hetrixtools.com/v3/blacklist-monitors`, {
-    headers: {
-      Authorization: `Bearer ${apiToken}`,
-    },
-  })
-    .then((response) => {
-      if (response.status === 200) {
-        return response.json();
-      } else {
-        throw new Error("Error al verificar el estado de la IP.");
-      }
-    })
-    .then((data) => {
-      const monitor = data.monitors.find((monitor) => monitor.target === ip);
-      const status = monitor ? "En lista" : "No en lista";
-      const listedIn = monitor ? `${monitor.listed.length} Sitios` : "";
-      const updatedAt = convertUTCToLocal(
-        new Date().toISOString().slice(0, 19).replace("T", " ")
-      );
+	$('.side-menu-list li.with-sub').each(function(){
+		var parent = $(this),
+			clickLink = parent.find('>span'),
+			subMenu = parent.find('>ul');
 
-      row.cells[3].innerText = status;
-      row.cells[4].innerText = listedIn;
-      row.cells[5].innerText = updatedAt;
+		clickLink.click(function() {
+			if (parent.hasClass('opened')) {
+				parent.removeClass('opened');
+				subMenu.slideUp();
+				subMenu.find('.opened').removeClass('opened');
+			} else {
+				if (clickLink.parents('.with-sub').size() == 1) {
+					$('.side-menu-list .opened').removeClass('opened').find('ul').slideUp();
+				}
+				parent.addClass('opened');
+				subMenu.slideDown();
+			}
+		});
+	});
 
-      // Enviar los datos actualizados al servidor
-      fetch("hetrix.php", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({
-          action: "update",
-          api_key: localStorage.getItem("apiToken"),
-          target: ip,
-          status: status,
-          listed_in: listedIn,
-          updated_at: updatedAt,
-        }),
-      })
-        .then((response) => response.text())
-        .then((result) => {
-          console.log("Update result:", result);
-        })
-        .catch((error) => {
-          console.error("Error:", error);
-        });
-    })
-    .catch((error) => {
-      row.cells[3].innerText = "Error";
-      row.cells[4].innerText = "Error";
-      row.cells[5].innerText = convertUTCToLocal(
-        new Date().toISOString().slice(0, 19).replace("T", " ")
-      );
-      console.error(error.message);
-    });
-}
 
-// Función para eliminar una IP
-function deleteRow(button) {
-  const row = button.parentNode.parentNode;
-  const ip = row.cells[2].innerText;
+/* ==========================================================================
+    Dashboard
+    ========================================================================== */
 
-  const apiToken = localStorage.getItem("apiToken");
+	$(window).resize(function(){
+		$('body').click('click');
+	});
 
-  fetch("hetrix.php", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({
-      action: "delete",
-      api_key: apiToken,
-      target: ip,
-    }),
-  })
-    .then((response) => response.text())
-    .then((result) => {
-      row.parentNode.removeChild(row.nextSibling);
-      row.parentNode.removeChild(row);
-    })
-    .catch((error) => {
-      console.error(error.message);
-    });
-}
+	// Collapse box
+	$('.box-typical-dashboard').each(function(){
+		var parent = $(this),
+			btnCollapse = parent.find('.action-btn-collapse');
 
-// Función para cerrar sesión
-function logout() {
-  fetch("logout.php")
-    .then((response) => {
-      if (response.status === 200) {
-        window.location.href = "login/login.html";
-      } else {
-        alert("Error al cerrar sesión.");
-      }
-    })
-    .catch((error) => {
-      console.error("Error al cerrar sesión:", error);
-    });
-}
+		btnCollapse.click(function(){
+			if (parent.hasClass('box-typical-collapsed')) {
+				parent.removeClass('box-typical-collapsed');
+			} else {
+				parent.addClass('box-typical-collapsed');
+			}
+		});
+	});
 
-// Cargar configuraciones y entradas de IP
-document.addEventListener("DOMContentLoaded", function () {
-  loadApiSettings();
-  loadIpEntries();
+	// Full screen box
+	$('.box-typical-dashboard').each(function(){
+		var parent = $(this),
+			btnExpand = parent.find('.action-btn-expand'),
+			classExpand = 'box-typical-full-screen';
+
+		btnExpand.click(function(){
+			if (parent.hasClass(classExpand)) {
+				parent.removeClass(classExpand);
+				$('html').css('overflow','auto');
+			} else {
+				parent.addClass(classExpand);
+				$('html').css('overflow','hidden');
+			}
+		});
+	});
+
+/* ==========================================================================
+	Select
+	========================================================================== */
+
+	if ($('.bootstrap-select').size()) {
+		// Bootstrap-select
+		$('.bootstrap-select').selectpicker({
+			style: '',
+			width: '100%',
+			size: 8
+		});
+	}
+
+	if ($('.select2').size()) {
+		// Select2
+		//$.fn.select2.defaults.set("minimumResultsForSearch", "Infinity");
+
+		$('.select2').not('.manual').select2();
+
+		$(".select2-icon").not('.manual').select2({
+			templateSelection: select2Icons,
+			templateResult: select2Icons
+		});
+
+		$(".select2-arrow").not('.manual').select2({
+			theme: "arrow"
+		});
+
+		$('.select2-no-search-arrow').select2({
+			minimumResultsForSearch: "Infinity",
+			theme: "arrow"
+		});
+
+		$('.select2-no-search-default').select2({
+			minimumResultsForSearch: "Infinity"
+		});
+
+		$(".select2-white").not('.manual').select2({
+			theme: "white"
+		});
+
+		$(".select2-photo").not('.manual').select2({
+			templateSelection: select2Photos,
+			templateResult: select2Photos
+		});
+	}
+
+	function select2Icons (state) {
+		if (!state.id) { return state.text; }
+		var $state = $(
+			'<span class="font-icon ' + state.element.getAttribute('data-icon') + '"></span><span>' + state.text + '</span>'
+		);
+		return $state;
+	}
+
+	function select2Photos (state) {
+		if (!state.id) { return state.text; }
+		var $state = $(
+			'<span class="user-item"><img src="' + state.element.getAttribute('data-photo') + '"/>' + state.text + '</span>'
+		);
+		return $state;
+	}
+
+/* ==========================================================================
+	Tooltips
+	========================================================================== */
+
+	// Tooltip
+	$('[data-toggle="tooltip"]').tooltip({
+		html: true
+	});
+
+	// Popovers
+	$('[data-toggle="popover"]').popover({
+		trigger: 'focus'
+	});
+	
+/* ==========================================================================
+	Full height box
+	========================================================================== */
+
+	function boxFullHeight() {
+		var sectionHeader = $('.section-header');
+		var sectionHeaderHeight = 0;
+
+		if (sectionHeader.size()) {
+			sectionHeaderHeight = parseInt(sectionHeader.height()) + parseInt(sectionHeader.css('padding-bottom'));
+		}
+
+		$('.box-typical-full-height').css('min-height',
+			$(window).height() -
+			parseInt($('.page-content').css('padding-top')) -
+			parseInt($('.page-content').css('padding-bottom')) -
+			sectionHeaderHeight -
+			parseInt($('.box-typical-full-height').css('margin-bottom')) - 2
+		);
+		$('.box-typical-full-height>.tbl, .box-typical-full-height>.box-typical-center').height(parseInt($('.box-typical-full-height').css('min-height')));
+	}
+
+	boxFullHeight();
+
+	$(window).resize(function(){
+		boxFullHeight();
+	});
+
+/* ==========================================================================
+	Chat
+	========================================================================== */
+
+	function chatHeights() {
+		$('.chat-dialog-area').height(
+			$(window).height() -
+			parseInt($('.page-content').css('padding-top')) -
+			parseInt($('.page-content').css('padding-bottom')) -
+			parseInt($('.chat-container').css('margin-bottom')) - 2 -
+			$('.chat-area-header').outerHeight() -
+			$('.chat-area-bottom').outerHeight()
+		);
+		$('.chat-list-in')
+			.height(
+				$(window).height() -
+				parseInt($('.page-content').css('padding-top')) -
+				parseInt($('.page-content').css('padding-bottom')) -
+				parseInt($('.chat-container').css('margin-bottom')) - 2 -
+				$('.chat-area-header').outerHeight()
+			)
+			.css('min-height', parseInt($('.chat-dialog-area').css('min-height')) + $('.chat-area-bottom').outerHeight());
+	}
+
+	chatHeights();
+
+	$(window).resize(function(){
+		chatHeights();
+	});
+
+/* ==========================================================================
+	Box typical full height with header
+	========================================================================== */
+
+	function boxWithHeaderFullHeight() {
+		/*$('.box-typical-full-height-with-header').each(function(){
+			var box = $(this),
+				boxHeader = box.find('.box-typical-header'),
+				boxBody = box.find('.box-typical-body');
+
+			boxBody.height(
+				$(window).height() -
+				parseInt($('.page-content').css('padding-top')) -
+				parseInt($('.page-content').css('padding-bottom')) -
+				parseInt(box.css('margin-bottom')) - 2 -
+				boxHeader.outerHeight()
+			);
+		});*/
+	}
+
+	boxWithHeaderFullHeight();
+
+	$(window).resize(function() {
+		boxWithHeaderFullHeight();
+	});
+
+/* ==========================================================================
+	File manager
+	========================================================================== */
+
+	function fileManagerHeight() {
+		$('.files-manager').each(function(){
+			var box = $(this),
+				boxColLeft = box.find('.files-manager-side'),
+				boxSubHeader = box.find('.files-manager-header'),
+				boxCont = box.find('.files-manager-content-in'),
+				boxColRight = box.find('.files-manager-aside');
+
+			var paddings = parseInt($('.page-content').css('padding-top')) +
+							parseInt($('.page-content').css('padding-bottom')) +
+							parseInt(box.css('margin-bottom')) + 2;
+
+			boxColLeft.height('auto');
+			boxCont.height('auto');
+			boxColRight.height('auto');
+
+			if ( boxColLeft.height() <= ($(window).height() - paddings) ) {
+				boxColLeft.height(
+					$(window).height() - paddings
+				);
+			}
+
+			if ( boxColRight.height() <= ($(window).height() - paddings - boxSubHeader.outerHeight()) ) {
+				boxColRight.height(
+					$(window).height() -
+					paddings -
+					boxSubHeader.outerHeight()
+				);
+			}
+
+			boxCont.height(
+				boxColRight.height()
+			);
+		});
+	}
+
+	fileManagerHeight();
+
+	$(window).resize(function(){
+		fileManagerHeight();
+	});
+
+/* ==========================================================================
+	Mail
+	========================================================================== */
+
+	function mailBoxHeight() {
+		$('.mail-box').each(function(){
+			var box = $(this),
+				boxHeader = box.find('.mail-box-header'),
+				boxColLeft = box.find('.mail-box-list'),
+				boxSubHeader = box.find('.mail-box-work-area-header'),
+				boxColRight = box.find('.mail-box-work-area-cont');
+
+			boxColLeft.height(
+				$(window).height() -
+				parseInt($('.page-content').css('padding-top')) -
+				parseInt($('.page-content').css('padding-bottom')) -
+				parseInt(box.css('margin-bottom')) - 2 -
+				boxHeader.outerHeight()
+			);
+
+			boxColRight.height(
+				$(window).height() -
+				parseInt($('.page-content').css('padding-top')) -
+				parseInt($('.page-content').css('padding-bottom')) -
+				parseInt(box.css('margin-bottom')) - 2 -
+				boxHeader.outerHeight() -
+				boxSubHeader.outerHeight()
+			);
+		});
+	}
+
+	mailBoxHeight();
+
+	$(window).resize(function(){
+		mailBoxHeight();
+	});
+
+/* ==========================================================================
+	Nestable
+	========================================================================== */
+
+	$('.dd-handle').hover(function(){
+		$(this).prev('button').addClass('hover');
+		$(this).prev('button').prev('button').addClass('hover');
+	}, function(){
+		$(this).prev('button').removeClass('hover');
+		$(this).prev('button').prev('button').removeClass('hover');
+	});
+
+/* ==========================================================================
+	Addl side menu
+	========================================================================== */
+
+	setTimeout(function(){
+		if (!("ontouchstart" in document.documentElement)) {
+			$('.side-menu-addl').jScrollPane(jScrollOptions);
+		}
+	},1000);
+
+
+/* ==========================================================================
+	Header notifications
+	========================================================================== */
+
+	// Tabs hack
+	$('.dropdown-menu-messages a[data-toggle="tab"]').click(function (e) {
+		e.stopPropagation();
+		e.preventDefault();
+		$(this).tab('show');
+
+		// Scroll
+		if (!("ontouchstart" in document.documentElement)) {
+			jspMessNotif = $('.dropdown-notification.messages .tab-pane.active').jScrollPane(jScrollOptions).data().jsp;
+		}
+	});
+
+	// Scroll
+	var jspMessNotif,
+		jspNotif;
+
+	$('.dropdown-notification.messages').on('show.bs.dropdown', function () {
+		if (!("ontouchstart" in document.documentElement)) {
+			jspMessNotif = $('.dropdown-notification.messages .tab-pane.active').jScrollPane(jScrollOptions).data().jsp;
+		}
+	});
+
+	$('.dropdown-notification.messages').on('hide.bs.dropdown', function () {
+		if (!("ontouchstart" in document.documentElement)) {
+			jspMessNotif.destroy();
+		}
+	});
+
+	$('.dropdown-notification.notif').on('show.bs.dropdown', function () {
+		if (!("ontouchstart" in document.documentElement)) {
+			jspNotif = $('.dropdown-notification.notif .dropdown-menu-notif-list').jScrollPane(jScrollOptions).data().jsp;
+		}
+	});
+
+	$('.dropdown-notification.notif').on('hide.bs.dropdown', function () {
+		if (!("ontouchstart" in document.documentElement)) {
+			jspNotif.destroy();
+		}
+	});
+
+/* ==========================================================================
+	Steps progress
+	========================================================================== */
+
+	function stepsProgresMarkup() {
+		$('.steps-icon-progress').each(function(){
+			var parent = $(this),
+				cont = parent.find('ul'),
+				padding = 0,
+				padLeft = (parent.find('li:first-child').width() - parent.find('li:first-child .caption').width())/2,
+				padRight = (parent.find('li:last-child').width() - parent.find('li:last-child .caption').width())/2;
+
+			padding = padLeft;
+
+			if (padLeft > padRight) padding = padRight;
+
+			cont.css({
+				marginLeft: -padding,
+				marginRight: -padding
+			});
+		});
+	}
+
+	stepsProgresMarkup();
+
+	$(window).resize(function(){
+		stepsProgresMarkup();
+	});
+
+/* ========================================================================== */
+
+	$('.control-panel-toggle').on('click', function() {
+		var self = $(this);
+		
+		if (self.hasClass('open')) {
+			self.removeClass('open');
+			$('.control-panel').removeClass('open');
+		} else {
+			self.addClass('open');
+			$('.control-panel').addClass('open');
+		}
+	});
+
+	$('.control-item-header .icon-toggle, .control-item-header .text').on('click', function() {
+		var content = $(this).closest('li').find('.control-item-content');
+
+		if (content.hasClass('open')) {
+			content.removeClass('open');
+		} else {
+			$('.control-item-content.open').removeClass('open');
+			content.addClass('open');
+		}
+	});
+
+	$.browser = {};
+	$.browser.chrome = /chrome/.test(navigator.userAgent.toLowerCase());
+	$.browser.msie = /msie/.test(navigator.userAgent.toLowerCase());
+	$.browser.mozilla = /firefox/.test(navigator.userAgent.toLowerCase());
+
+	if ($.browser.chrome) {
+		$('body').addClass('chrome-browser');
+	} else if ($.browser.msie) {
+		$('body').addClass('msie-browser');
+	} else if ($.browser.mozilla) {
+		$('body').addClass('mozilla-browser');
+	}
+
+	$('#show-hide-sidebar-toggle').on('click', function() {
+		if (!$('body').hasClass('sidebar-hidden')) {
+			$('body').addClass('sidebar-hidden');
+		} else {
+			$('body').removeClass('sidebar-hidden');
+		}
+	});
 });
-
-// Función para cargar entradas de IP
-
-function loadIpEntries() {
-  fetch("load_ips.php")
-    .then((response) => response.json())
-    .then((data) => {
-      const table = document
-        .getElementById("ip-table")
-        .getElementsByTagName("tbody")[0];
-      data.forEach((entry, index) => {
-        const newRow = table.insertRow();
-        newRow.className = "main-row";
-
-        newRow.insertCell(0).innerText = index + 1;
-        newRow.insertCell(1).innerText = entry.name;
-        newRow.insertCell(2).innerText = entry.ip_address;
-        newRow.insertCell(3).innerText = "Pendiente";
-        newRow.insertCell(4).innerText = "";
-        newRow.insertCell(5).innerText = convertUTCToLocal(entry.updated_at); // Conversión de zona horaria
-        newRow.insertCell(6).innerHTML = `
-            <button class="btn-action" onclick="verifyRow(this)" title="Verificar ahora">
-                <img src="https://img.icons8.com/material-outlined/24/000000/user-shield.png"/>
-            </button>
-            <button class="btn-action" onclick="viewDetails(this)" title="Ver Detalles">
-                <img src="https://img.icons8.com/material-outlined/24/000000/eye.png"/>
-            </button>
-            <button class="btn-action" onclick="deleteRow(this)" title="Eliminar">
-                <img src="https://img.icons8.com/material-outlined/24/000000/delete.png"/>
-            </button>`;
-
-        const detailRow = table.insertRow();
-        detailRow.className = "details-row";
-        const detailCell = detailRow.insertCell(0);
-        detailCell.colSpan = 7;
-        detailCell.innerHTML = `
-            <table class="details-table">
-                <thead>
-                    <tr>
-                        <th>RBL</th>
-                        <th>URL</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>`;
-      });
-    })
-    .catch((error) => {
-      console.error("Error al cargar IPs:", error);
-    });
-}

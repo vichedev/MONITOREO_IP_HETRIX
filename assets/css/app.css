@@ -1,0 +1,96 @@
+
+    .details-row {
+        display: none;
+    }
+
+    .card {
+        margin-bottom: 1.5rem;
+        min-height: 250px;
+        /* Asegura un tamaño mínimo consistente */
+    }
+
+    .card-header {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .card-body {
+        background-color: #f8f9fa;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+        overflow-y: auto;
+        max-height: 400px;
+        /* Ajusta la altura según sea necesario */
+    }
+
+    .table th,
+    .table td {
+        white-space: nowrap;
+        /* Evita el ajuste de texto en celdas */
+    }
+
+    .btn-action {
+        border: none;
+        background: none;
+        padding: 0;
+        margin: 0;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        /* Agrega un pequeño margen entre los botones */
+        margin-right: 5px;
+    }
+
+    .table td {
+        vertical-align: middle;
+        text-align: center;
+        /* Centra el contenido de la celda */
+    }
+
+  
+
+    .btn-action:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .table td .btn-action {
+        margin-right: 0;
+        /* Elimina el margen derecho en la última acción */
+    }
+
+    .table td:last-child .btn-action:last-child {
+        margin-right: 0;
+        /* Asegura que el último botón no tenga margen derecho */
+    }
+
+    .navbar-brand {
+        font-weight: bold;
+    }
+
+    .user-greeting {
+        margin-left: 20px;
+        font-weight: bold;
+        color: #007bff;
+    }
+
+    /* Añade este CSS a tu archivo de estilos */
+    .details-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .details-table th,
+    .details-table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+    }
+
+    .details-table th {
+        background-color: #f4f4f4;
+    }
+    

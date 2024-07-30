@@ -1,9 +1,12 @@
-// Función para mostrar mensajes
+// Función para mostrar mensajes usando SweetAlert2
 function showMessage(message, type) {
-  const messageDiv = document.getElementById("message");
-  messageDiv.innerHTML = message;
-  messageDiv.className = `message ${type}`;
-  messageDiv.style.display = "block";
+  Swal.fire({
+    title: type === "success" ? "Éxito" : "Error",
+    text: message,
+    icon: type,
+    confirmButtonText: "OK",
+    confirmButtonColor: type === "success" ? "#28a745" : "#dc3545",
+  });
 }
 
 // Función para cargar configuraciones API desde la base de datos
@@ -69,7 +72,13 @@ function registerRow() {
   const ip = document.getElementById("new-ip").value;
 
   if (name.trim() === "" || ip.trim() === "") {
-    alert("Por favor, complete todos los campos.");
+    Swal.fire({
+      title: "Error",
+      text: "Por favor, complete todos los campos.",
+      icon: "error",
+      confirmButtonText: "OK",
+      confirmButtonColor: "#dc3545",
+    });
     return;
   }
 
@@ -77,9 +86,13 @@ function registerRow() {
   const contactListId = localStorage.getItem("contactListId");
 
   if (!apiToken || !contactListId) {
-    alert(
-      "Por favor, configure el Token API y el ID de Lista de contacto primero."
-    );
+    Swal.fire({
+      title: "Error",
+      text: "Por favor, configure el Token API y el ID de Lista de contacto primero.",
+      icon: "error",
+      confirmButtonText: "OK",
+      confirmButtonColor: "#dc3545",
+    });
     return;
   }
 
@@ -121,13 +134,13 @@ function registerRow() {
       cellUpdated.innerHTML = "";
       cellActions.innerHTML = `
                 <button class="btn-action" onclick="verifyRow(this)" title="Verificar ahora">
-                    <img src="https://img.icons8.com/material-outlined/24/000000/user-shield.png"/>
+                    <img src="assets/img/verificado.png" alt="Verificar" width="50" height="50"/>
                 </button>
                 <button class="btn-action" onclick="viewDetails(this)" title="Ver Detalles">
-                    <img src="https://img.icons8.com/material-outlined/24/000000/eye.png"/>
+                    <img src="assets/img/archivo.png" alt="Verificar" width="40" height="40"/>
                 </button>
                 <button class="btn-action" onclick="deleteRow(this)" title="Eliminar">
-                    <img src="https://img.icons8.com/material-outlined/24/000000/delete.png"/>
+                   <img src="assets/img/borrar.png" alt="Verificar" width="40" height="40"/>
                 </button>`;
 
       const detailRow = table.insertRow();
@@ -158,51 +171,60 @@ function registerRow() {
 // Función para ver detalles de una IP
 function viewDetails(button) {
   const row = button.parentNode.parentNode;
-  const detailRow = row.nextSibling;
   const apiToken = localStorage.getItem("apiToken");
   const ip = row.cells[2].innerText;
 
   if (!apiToken) {
-    alert("Por favor, configure el Token API primero.");
+    showMessage("Por favor, configure el Token API primero.", "error");
     return;
   }
 
-  if (detailRow.style.display === "none" || detailRow.style.display === "") {
-    fetch(`https://api.hetrixtools.com/v3/blacklist-monitors`, {
-      headers: {
-        Authorization: `Bearer ${apiToken}`,
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        const detailsTable = detailRow.querySelector(".details-table tbody");
-        detailsTable.innerHTML = "";
+  fetch(`https://api.hetrixtools.com/v3/blacklist-monitors`, {
+    headers: {
+      Authorization: `Bearer ${apiToken}`,
+    },
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      const monitor = data.monitors.find((monitor) => monitor.target === ip);
+      let detailsHtml =
+        "<table class='details-table'><thead><tr><th>RBL</th><th>URL</th></tr></thead><tbody>";
 
-        const monitor = data.monitors.find((monitor) => monitor.target === ip);
-        if (monitor && monitor.listed.length > 0) {
-          monitor.listed.forEach((listing) => {
-            const detailRow = detailsTable.insertRow();
-            const cellRbl = detailRow.insertCell(0);
-            const cellUrl = detailRow.insertCell(1);
-            cellRbl.innerText = listing.rbl;
-            cellUrl.innerHTML = `<a href="${listing.delist}" target="_blank">${listing.delist}</a>`;
-          });
-        } else {
-          const detailRow = detailsTable.insertRow();
-          const cell = detailRow.insertCell(0);
-          cell.colSpan = 2;
-          cell.innerText = "No hay listados para esta IP.";
-        }
+      if (monitor && monitor.listed.length > 0) {
+        monitor.listed.forEach((listing) => {
+          detailsHtml += `<tr><td>${listing.rbl}</td><td><a href="${listing.delist}" target="_blank">${listing.delist}</a></td></tr>`;
+        });
+      } else {
+        detailsHtml +=
+          "<tr><td colspan='2'>No hay listados para esta IP.</td></tr>";
+      }
 
-        detailRow.style.display = "table-row-group";
-      })
-      .catch((error) => {
-        console.error(error.message);
-        alert("Error al obtener los detalles de las listas negras.");
+      detailsHtml += "</tbody></table>";
+
+      Swal.fire({
+        title: "Detalles de la IP",
+        html: detailsHtml,
+        confirmButtonText: "Cerrar",
+        confirmButtonColor: "#007bff",
+        width: "80%",
+        showCloseButton: true,
+        didOpen: () => {
+          // Ajustar estilos del modal si es necesario
+          const container = Swal.getPopup().querySelector(
+            ".swal2-html-container"
+          );
+          container.style.maxHeight = "400px"; // Ajusta según sea necesario
+          container.style.overflowY = "auto";
+        },
       });
-  } else {
-    detailRow.style.display = "none";
-  }
+    })
+    .catch((error) => {
+      console.error(error.message);
+      showMessage(
+        "Error al obtener los detalles de las listas negras.",
+        "error"
+      );
+    });
 }
 
 // Función para convertir UTC a la zona horaria local en formato de 24 horas
@@ -222,100 +244,130 @@ const convertUTCToLocal = (utcDateStr) => {
     .replace(",", ""); // Eliminamos la coma entre la fecha y la hora
 };
 
-// Función para verificar el estado de una IP
+// Función para verificar el estado de una IP con confirmación
 function verifyRow(button) {
   const row = button.parentNode.parentNode;
-  const apiToken = localStorage.getItem("apiToken");
   const ip = row.cells[2].innerText;
 
-  if (!apiToken) {
-    alert("Por favor, configure el Token API primero.");
-    return;
-  }
+  Swal.fire({
+    title: "Confirmar",
+    text: `¿Está seguro de que desea verificar la IP ${ip}?`,
+    icon: "question",
+    showCancelButton: true,
+    confirmButtonText: "Sí, verificar",
+    cancelButtonText: "Cancelar",
+    confirmButtonColor: "#28a745",
+    cancelButtonColor: "#dc3545",
+  }).then((result) => {
+    if (result.isConfirmed) {
+      const apiToken = localStorage.getItem("apiToken");
 
-  fetch(`https://api.hetrixtools.com/v3/blacklist-monitors`, {
-    headers: {
-      Authorization: `Bearer ${apiToken}`,
-    },
-  })
-    .then((response) => {
-      if (response.status === 200) {
-        return response.json();
-      } else {
-        throw new Error("Error al verificar el estado de la IP.");
+      if (!apiToken) {
+        showMessage("Por favor, configure el Token API primero.", "error");
+        return;
       }
-    })
-    .then((data) => {
-      const monitor = data.monitors.find((monitor) => monitor.target === ip);
-      const status = monitor ? "En lista" : "No en lista";
-      const listedIn = monitor ? `${monitor.listed.length} Sitios` : "";
-      const updatedAt = convertUTCToLocal(
-        new Date().toISOString().slice(0, 19).replace("T", " ")
-      );
 
-      row.cells[3].innerText = status;
-      row.cells[4].innerText = listedIn;
-      row.cells[5].innerText = updatedAt;
+      fetch(`https://api.hetrixtools.com/v3/blacklist-monitors`, {
+        headers: {
+          Authorization: `Bearer ${apiToken}`,
+        },
+      })
+        .then((response) => {
+          if (response.status === 200) {
+            return response.json();
+          } else {
+            throw new Error("Error al verificar el estado de la IP.");
+          }
+        })
+        .then((data) => {
+          const monitor = data.monitors.find(
+            (monitor) => monitor.target === ip
+          );
+          const status = monitor ? "En lista" : "No en lista";
+          const listedIn = monitor ? `${monitor.listed.length} Sitios` : "";
+          const updatedAt = convertUTCToLocal(
+            new Date().toISOString().slice(0, 19).replace("T", " ")
+          );
 
-      // Enviar los datos actualizados al servidor
+          row.cells[3].innerText = status;
+          row.cells[4].innerText = listedIn;
+          row.cells[5].innerText = updatedAt;
+
+          fetch("hetrix.php", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: new URLSearchParams({
+              action: "update",
+              api_key: localStorage.getItem("apiToken"),
+              target: ip,
+              status: status,
+              listed_in: listedIn,
+              updated_at: updatedAt,
+            }),
+          })
+            .then((response) => response.text())
+            .then((result) => {
+              console.log("Update result:", result);
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+            });
+        })
+        .catch((error) => {
+          row.cells[3].innerText = "Error";
+          row.cells[4].innerText = "Error";
+          row.cells[5].innerText = convertUTCToLocal(
+            new Date().toISOString().slice(0, 19).replace("T", " ")
+          );
+          console.error(error.message);
+          showMessage(error.message, "error");
+        });
+    }
+  });
+}
+// Función para eliminar una IP con confirmación
+function deleteRow(button) {
+  const row = button.parentNode.parentNode;
+  const ip = row.cells[2].innerText;
+
+  Swal.fire({
+    title: "Confirmar",
+    text: `¿Está seguro de que desea eliminar la IP ${ip}?`,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Sí, eliminar",
+    cancelButtonText: "Cancelar",
+    confirmButtonColor: "#dc3545",
+    cancelButtonColor: "#007bff",
+  }).then((result) => {
+    if (result.isConfirmed) {
+      const apiToken = localStorage.getItem("apiToken");
+
       fetch("hetrix.php", {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body: new URLSearchParams({
-          action: "update",
-          api_key: localStorage.getItem("apiToken"),
+          action: "delete",
+          api_key: apiToken,
           target: ip,
-          status: status,
-          listed_in: listedIn,
-          updated_at: updatedAt,
         }),
       })
         .then((response) => response.text())
         .then((result) => {
-          console.log("Update result:", result);
+          row.parentNode.removeChild(row.nextSibling); // Elimina la fila de detalles
+          row.parentNode.removeChild(row); // Elimina la fila principal
+          showMessage("IP eliminada correctamente.", "success");
         })
         .catch((error) => {
-          console.error("Error:", error);
+          console.error(error.message);
+          showMessage(error.message, "error");
         });
-    })
-    .catch((error) => {
-      row.cells[3].innerText = "Error";
-      row.cells[4].innerText = "Error";
-      row.cells[5].innerText = convertUTCToLocal(
-        new Date().toISOString().slice(0, 19).replace("T", " ")
-      );
-      console.error(error.message);
-    });
-}
-
-// Función para eliminar una IP
-function deleteRow(button) {
-  const row = button.parentNode.parentNode;
-  const ip = row.cells[2].innerText;
-
-  const apiToken = localStorage.getItem("apiToken");
-
-  fetch("hetrix.php", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({
-      action: "delete",
-      api_key: apiToken,
-      target: ip,
-    }),
-  })
-    .then((response) => response.text())
-    .then((result) => {
-      row.parentNode.removeChild(row.nextSibling);
-      row.parentNode.removeChild(row);
-    })
-    .catch((error) => {
-      console.error(error.message);
-    });
+    }
+  });
 }
 
 // Función para cerrar sesión
@@ -325,11 +377,24 @@ function logout() {
       if (response.status === 200) {
         window.location.href = "login/login.html";
       } else {
-        alert("Error al cerrar sesión.");
+        Swal.fire({
+          title: "Error",
+          text: "Error al cerrar sesión.",
+          icon: "error",
+          confirmButtonText: "OK",
+          confirmButtonColor: "#dc3545",
+        });
       }
     })
     .catch((error) => {
       console.error("Error al cerrar sesión:", error);
+      Swal.fire({
+        title: "Error",
+        text: "Error al cerrar sesión.",
+        icon: "error",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#dc3545",
+      });
     });
 }
 
@@ -340,7 +405,6 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // Función para cargar entradas de IP
-
 function loadIpEntries() {
   fetch("load_ips.php")
     .then((response) => response.json())
@@ -359,33 +423,40 @@ function loadIpEntries() {
         newRow.insertCell(4).innerText = "";
         newRow.insertCell(5).innerText = convertUTCToLocal(entry.updated_at); // Conversión de zona horaria
         newRow.insertCell(6).innerHTML = `
-            <button class="btn-action" onclick="verifyRow(this)" title="Verificar ahora">
-                <img src="https://img.icons8.com/material-outlined/24/000000/user-shield.png"/>
-            </button>
-            <button class="btn-action" onclick="viewDetails(this)" title="Ver Detalles">
-                <img src="https://img.icons8.com/material-outlined/24/000000/eye.png"/>
-            </button>
-            <button class="btn-action" onclick="deleteRow(this)" title="Eliminar">
-                <img src="https://img.icons8.com/material-outlined/24/000000/delete.png"/>
-            </button>`;
+                          <button class="btn-action" onclick="verifyRow(this)" title="Verificar ahora">
+                          <img src="assets/img/verificado.png" alt="Verificar" width="50" height="50"/>
+                          </button>
+                          <button class="btn-action" onclick="viewDetails(this)" title="Ver Detalles">
+                          <img src="assets/img/archivo.png" alt="Detalles" width="40" height="40"/>
+                          </button>
+                          <button class="btn-action" onclick="deleteRow(this)" title="Eliminar">
+                          <img src="assets/img/borrar.png" alt="Eliminar" width="40" height="40"/>
+                          </button>`;
 
         const detailRow = table.insertRow();
         detailRow.className = "details-row";
         const detailCell = detailRow.insertCell(0);
         detailCell.colSpan = 7;
         detailCell.innerHTML = `
-            <table class="details-table">
-                <thead>
-                    <tr>
-                        <th>RBL</th>
-                        <th>URL</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>`;
+                  <table class="details-table">
+                      <thead>
+                          <tr>
+                              <th>RBL</th>
+                              <th>URL</th>
+                          </tr>
+                      </thead>
+                      <tbody></tbody>
+                  </table>`;
       });
     })
     .catch((error) => {
       console.error("Error al cargar IPs:", error);
+      Swal.fire({
+        title: "Error",
+        text: "Error al cargar las IPs.",
+        icon: "error",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#dc3545",
+      });
     });
 }

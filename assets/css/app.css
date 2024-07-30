@@ -94,3 +94,10 @@
         background-color: #f4f4f4;
     }
     
+
+    .input-group-text {
+        cursor: pointer; /* Cambia el cursor a una mano cuando se pasa sobre el botón */
+    }
+    .input-group-text:hover {
+        background-color: #e9ecef; /* Opcional: color de fondo al pasar el ratón */
+    }

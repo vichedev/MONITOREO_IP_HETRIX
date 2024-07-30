@@ -460,3 +460,25 @@ function loadIpEntries() {
       });
     });
 }
+
+
+function toggleVisibility(id) {
+  const input = document.getElementById(id);
+  const icon = input.nextElementSibling.querySelector('.input-group-text');
+  if (input.type === 'password') {
+      input.type = 'text';
+      icon.textContent = '🙈'; 
+  } else {
+      input.type = 'password';
+      icon.textContent = '👁️'; 
+  }
+}
+
+// Inicialmente ocultar los campos
+document.addEventListener('DOMContentLoaded', () => {
+  const apiTokenInput = document.getElementById('api-token');
+  const contactListIdInput = document.getElementById('contact-list-id');
+
+  apiTokenInput.type = 'password';
+  contactListIdInput.type = 'password';
+});

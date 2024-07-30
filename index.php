@@ -37,7 +37,6 @@ $username = isset($_SESSION['username']) ? $_SESSION['username'] : 'No disponibl
 
         <!-- Contenido Principal -->
         <div class="row">
-            <!-- Tarjeta de Configuración HetrixTools -->
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-header">
@@ -46,17 +45,27 @@ $username = isset($_SESSION['username']) ? $_SESSION['username'] : 'No disponibl
                     <div class="card-body">
                         <div class="mb-3">
                             <label for="api-token" class="form-label">Token API</label>
-                            <input type="text" id="api-token" class="form-control" placeholder="Ingrese su Token API"
-                                disabled />
+                            <div class="input-group">
+                                <input type="password" id="api-token" class="form-control"
+                                    placeholder="Ingrese su Token API" disabled />
+                                <div class="input-group-append">
+                                    <span class="input-group-text" onclick="toggleVisibility('api-token')">👁️</span>
+                                </div>
+                            </div>
                         </div>
                         <div class="mb-3">
                             <label for="contact-list-id" class="form-label">ID Lista de contacto</label>
-                            <input type="text" id="contact-list-id" class="form-control"
-                                placeholder="Ingrese el ID de Lista de contacto" disabled />
+                            <div class="input-group">
+                                <input type="password" id="contact-list-id" class="form-control"
+                                    placeholder="Ingrese el ID de Lista de contacto" disabled />
+                                <div class="input-group-append">
+                                    <span class="input-group-text"
+                                        onclick="toggleVisibility('contact-list-id')">👁️</span>
+                                </div>
+                            </div>
                         </div>
                         <button class="btn btn-primary" onclick="validateApiToken()">Validar Credenciales</button>
                         <span id="message"></span>
-
                     </div>
                 </div>
             </div>

@@ -184,6 +184,7 @@ $configurations = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="assets/js/hetrix.js"></script>
     <script>
+    // Boton de guardar
     function saveConfiguration() {
         const name = document.getElementById('config-name').value;
         const apiToken = document.getElementById('api-token-new').value;
@@ -219,6 +220,9 @@ $configurations = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     if (data.success) {
                         // Recargar el selector de configuraciones
                         loadConfigurations();
+
+                        // Limpiar los campos del formulario
+                        document.getElementById('add-config-form').reset();
                     }
                 });
             })
@@ -231,6 +235,7 @@ $configurations = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 });
             });
     }
+
 
     // Cargar configuraciones en el desplegable
     function loadConfigurations() {

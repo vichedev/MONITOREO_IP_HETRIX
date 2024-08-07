@@ -1,11 +1,7 @@
 <?php
 session_start(); // Inicia la sesión
 
-$host = 'localhost';
-$db = 'monitoring_system';
-$user = 'root';
-$pass = '';
-
+require_once('db/db.php');
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$db", $user, $pass);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);

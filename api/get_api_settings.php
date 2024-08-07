@@ -5,10 +5,7 @@ session_start(); // Inicia la sesión
 date_default_timezone_set('America/Guayaquil');
 
 // Configuración de la base de datos
-$host = 'localhost';
-$db = 'monitoring_system';
-$user = 'root';
-$pass = '';
+require_once('../db/db.php');
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$db", $user, $pass);

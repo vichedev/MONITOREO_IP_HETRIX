@@ -11,10 +11,7 @@ if (!isset($_SESSION['user_id'])) {
 $username = isset($_SESSION['username']) ? $_SESSION['username'] : 'No disponible';
 
 // Configuración de la base de datos
-$host = 'localhost';
-$db = 'monitoring_system';
-$user = 'root';
-$pass = '';
+require_once('db/db.php');
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$db", $user, $pass);

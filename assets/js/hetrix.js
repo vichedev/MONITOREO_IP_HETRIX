@@ -462,6 +462,46 @@ function loadIpEntries() {
 }
 
 
+
+// hetrix.js
+
+function loadConfiguration(configId) {
+  if (configId === '') {
+      // Si no se selecciona una configuración, limpia los campos
+      document.getElementById('api-token').value = '';
+      document.getElementById('contact-list-id').value = '';
+      return;
+  }
+
+  // Realiza una solicitud AJAX para obtener los detalles de la configuración
+  fetch('get_config.php?id=' + encodeURIComponent(configId))
+      .then(response => response.json())
+      .then(data => {
+          if (data.success) {
+              // Actualiza los campos con los datos recibidos
+              document.getElementById('api-token').value = data.api_token;
+              document.getElementById('contact-list-id').value = data.contact_list_id;
+          } else {
+              // Maneja el error en caso de fallo
+              Swal.fire({
+                  icon: 'error',
+                  title: 'Error',
+                  text: data.message
+              });
+          }
+      })
+      .catch(error => {
+          // Maneja errores de la solicitud AJAX
+          console.error('Error:', error);
+          Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'Error al cargar la configuración.'
+          });
+      });
+}
+
+
 function toggleVisibility(id) {
   const input = document.getElementById(id);
   const icon = input.nextElementSibling.querySelector('.input-group-text');

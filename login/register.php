@@ -17,8 +17,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = $_POST['username'] ?? '';
     $password = $_POST['password'] ?? '';
     $email = $_POST['email'] ?? '';
-    $apiToken = $_POST['api_token'] ?? null; // Obtiene el token API, puede ser null si no se proporciona
-    $contactListId = $_POST['contact_list_id'] ?? null; // Obtiene el ID de lista de contacto, puede ser null si no se proporciona
 
     // Validar datos
     if (empty($username) || empty($password) || empty($email)) {
@@ -48,12 +46,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 
         // Insertar nuevo usuario
-        $stmt = $pdo->prepare("INSERT INTO users (username, password_hash, email, api_token, contact_list_id) VALUES (:username, :password_hash, :email, :api_token, :contact_list_id)");
+        $stmt = $pdo->prepare("INSERT INTO users (username, password_hash, email) VALUES (:username, :password_hash, :email)");
         $stmt->bindParam(':username', $username);
         $stmt->bindParam(':password_hash', $passwordHash);
         $stmt->bindParam(':email', $email);
-        $stmt->bindParam(':api_token', $apiToken);
-        $stmt->bindParam(':contact_list_id', $contactListId);
         $stmt->execute();
 
         // Iniciar sesión para el usuario recién registrado
